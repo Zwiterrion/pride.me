@@ -63,7 +63,7 @@ function LoginPage({ onLogin }) {
               {error}
             </div>
           )}
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Mail className="w-4 h-4 inline mr-2" />
@@ -191,14 +191,14 @@ function Dashboard({ session, onSignOut }) {
       alert('Please enter a valid email and amount (max: ' + prideScore.giveable + ')')
       return
     }
-    
+
     const linkData = btoa(JSON.stringify({
       from: session.user.email,
       to: shareEmail,
       amount: shareAmount,
       timestamp: Date.now()
     }))
-    
+
     const link = `${window.location.origin}?share=${linkData}`
     setShareLink(link)
   }
@@ -218,7 +218,7 @@ function Dashboard({ session, onSignOut }) {
     const now = new Date()
     const diff = now - date
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    
+
     if (days === 0) return 'Today'
     if (days === 1) return 'Yesterday'
     if (days < 7) return `${days} days ago`
@@ -257,20 +257,20 @@ function Dashboard({ session, onSignOut }) {
             </div>
             <Trophy className="w-24 h-24 text-white opacity-20" />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4 pt-6 border-t border-purple-400">
             <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <p className="text-xs text-purple-200 mb-1">Giveable Pride</p>
-              <p className="text-3xl font-bold">{prideScore.giveable}</p>
-              <p className="text-xs text-purple-200 mt-1">Can share with others</p>
+              <p className="text-xs text-gray-900 mb-1">Giveable Pride</p>
+              <p className="text-3xl font-bold text-gray-900">{prideScore.giveable}</p>
+              <p className="text-xs text-gray-900 mt-1">Can share with others</p>
             </div>
             <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <p className="text-xs text-purple-200 mb-1">Received Pride</p>
-              <p className="text-3xl font-bold">{prideScore.received}</p>
-              <p className="text-xs text-purple-200 mt-1">From others (view only)</p>
+              <p className="text-xs text-gray-900 mb-1">Received Pride</p>
+              <p className="text-3xl font-bold text-gray-900">{prideScore.received}</p>
+              <p className="text-xs text-gray-900 mt-1">From others (view only)</p>
             </div>
           </div>
-          
+
           <div className="mt-4">
             <p className="text-sm text-purple-100">Logged in as: {session.user.email}</p>
             <p className="text-xs text-purple-200 mt-1">+100 giveable points awarded weekly</p>
@@ -280,33 +280,30 @@ function Dashboard({ session, onSignOut }) {
         <div className="flex gap-2 mb-6 bg-white rounded-xl p-2 shadow">
           <button
             onClick={() => setActiveTab('home')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${
-              activeTab === 'home'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${activeTab === 'home'
+              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             <Trophy className="w-5 h-5" />
             Dashboard
           </button>
           <button
             onClick={() => setActiveTab('share')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${
-              activeTab === 'share'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${activeTab === 'share'
+              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             <Share2 className="w-5 h-5" />
             Share Pride
           </button>
           <button
             onClick={() => setActiveTab('shop')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${
-              activeTab === 'shop'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${activeTab === 'shop'
+              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             <ShoppingCart className="w-5 h-5" />
             Shop
@@ -513,6 +510,10 @@ export default function PrideMeApp() {
   const [shareData, setShareData] = useState(null)
   const [processing, setProcessing] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     // Check for stored session
@@ -536,11 +537,11 @@ export default function PrideMeApp() {
     } else {
       setLoading(false)
     }
-    
+
     // Check for share link
     const params = new URLSearchParams(window.location.search)
     const shareParam = params.get('share')
-    
+
     if (shareParam) {
       try {
         const decoded = JSON.parse(atob(shareParam))
@@ -568,15 +569,46 @@ export default function PrideMeApp() {
   const handleLogin = (sessionData) => {
     setSession(sessionData)
     sessionStorage.setItem('pride_session', JSON.stringify(sessionData))
-    
+
     if (shareData && sessionData.user.email === shareData.to) {
       processShareLink(sessionData, shareData)
     }
   }
 
+  const handleSubmit = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const endpoint = isSignUp ? 'signup' : 'token?grant_type=password'
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ email, password })
+      })
+
+      const data = await res.json()
+
+      if (data.access_token) {
+        handleLogin({ token: data.access_token, user: data.user })
+      } else if (isSignUp && res.ok) {
+        setError('Account created! Please sign in.')
+        setIsSignUp(false)
+      } else {
+        setError(data.error_description || data.msg || 'Authentication failed')
+      }
+    } catch (err) {
+      setError('Network error. Please try again.')
+    }
+    setLoading(false)
+  }
+
   const processShareLink = async (sessionData, data) => {
     setProcessing(true)
-    
+
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/process_pride_share`, {
         method: 'POST',
@@ -606,7 +638,7 @@ export default function PrideMeApp() {
     } catch (err) {
       alert('Error processing share link')
     }
-    
+
     setProcessing(false)
   }
 
@@ -646,15 +678,69 @@ export default function PrideMeApp() {
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               You've received Pride!
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-2">
               <span className="font-semibold">{shareData.from}</span> wants to share{' '}
               <span className="text-2xl font-bold text-purple-600">{shareData.amount}</span> pride points with you!
             </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Sign in with <span className="font-semibold">{shareData.to}</span> to claim your pride
+            </p>
           </div>
-          <p className="text-sm text-gray-500 text-center mb-6">
-            Sign in with <span className="font-semibold">{shareData.to}</span> to claim your pride
-          </p>
-          <LoginPage onLogin={handleLogin} />
+
+          <div className="space-y-4">
+            {error && (
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Mail className="w-4 h-4 inline mr-2" />
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder={shareData.to}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Lock className="w-4 h-4 inline mr-2" />
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition disabled:opacity-50"
+            >
+              {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="w-full text-sm text-gray-600 hover:text-gray-900"
+            >
+              {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+            </button>
+          </div>
         </div>
       </div>
     )
