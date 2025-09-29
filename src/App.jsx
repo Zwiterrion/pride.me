@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Gift, Share2, ShoppingCart, Trophy, LogOut, Copy, Check, Mail, Lock } from 'lucide-react'
 
@@ -61,7 +62,7 @@ function LoginPage({ onLogin }) {
               {error}
             </div>
           )}
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Mail className="w-4 h-4 inline mr-2" />
@@ -116,7 +117,7 @@ function LoginPage({ onLogin }) {
 
 function Dashboard({ session, onSignOut }) {
   const [activeTab, setActiveTab] = useState('home')
-  const [prideScore, setPrideScore] = useState(250)
+  const [prideScore, setPrideScore] = useState({ giveable: 250, received: 0 })
   const [shareEmail, setShareEmail] = useState('')
   const [shareAmount, setShareAmount] = useState(10)
   const [shareLink, setShareLink] = useState('')
@@ -137,7 +138,7 @@ function Dashboard({ session, onSignOut }) {
 
   const fetchPrideScore = async () => {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/pride_scores?user_id=eq.${session.user.id}&select=score`, {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/pride_scores?user_id=eq.${session.user.id}&select=giveable_score,received_score`, {
         headers: {
           'Authorization': `Bearer ${session.token}`,
           'apikey': SUPABASE_ANON_KEY
@@ -145,7 +146,10 @@ function Dashboard({ session, onSignOut }) {
       })
       const data = await res.json()
       if (data && data.length > 0) {
-        setPrideScore(data[0].score)
+        setPrideScore({
+          giveable: data[0].giveable_score || 0,
+          received: data[0].received_score || 0
+        })
       }
     } catch (err) {
       console.error('Error fetching score:', err)
@@ -182,18 +186,18 @@ function Dashboard({ session, onSignOut }) {
   }
 
   const generateShareLink = () => {
-    if (!shareEmail || shareAmount <= 0 || shareAmount > prideScore) {
-      alert('Please enter a valid email and amount (max: ' + prideScore + ')')
+    if (!shareEmail || shareAmount <= 0 || shareAmount > prideScore.giveable) {
+      alert('Please enter a valid email and amount (max: ' + prideScore.giveable + ')')
       return
     }
-    
+
     const linkData = btoa(JSON.stringify({
       from: session.user.email,
       to: shareEmail,
       amount: shareAmount,
       timestamp: Date.now()
     }))
-    
+
     const link = `${window.location.origin}?share=${linkData}`
     setShareLink(link)
   }
@@ -213,7 +217,7 @@ function Dashboard({ session, onSignOut }) {
     const now = new Date()
     const diff = now - date
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    
+
     if (days === 0) return 'Today'
     if (days === 1) return 'Yesterday'
     if (days < 7) return `${days} days ago`
@@ -244,50 +248,61 @@ function Dashboard({ session, onSignOut }) {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl shadow-xl p-8 mb-8 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100 mb-2">Your Pride Score</p>
-              <h2 className="text-6xl font-bold">{prideScore}</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex-1">
+              <p className="text-purple-100 mb-2">Total Pride Score</p>
+              <h2 className="text-6xl font-bold">{prideScore.giveable + prideScore.received}</h2>
               <p className="text-purple-100 mt-2">points</p>
             </div>
             <Trophy className="w-24 h-24 text-white opacity-20" />
           </div>
-          <div className="mt-6 pt-6 border-t border-purple-400">
+
+          <div className="grid grid-cols-2 gap-4 pt-6 border-t border-purple-400">
+            <div className="bg-white bg-opacity-10 rounded-lg p-4">
+              <p className="text-xs text-purple-200 mb-1">Giveable Pride</p>
+              <p className="text-3xl font-bold">{prideScore.giveable}</p>
+              <p className="text-xs text-purple-200 mt-1">Can share with others</p>
+            </div>
+            <div className="bg-white bg-opacity-10 rounded-lg p-4">
+              <p className="text-xs text-purple-200 mb-1">Received Pride</p>
+              <p className="text-3xl font-bold">{prideScore.received}</p>
+              <p className="text-xs text-purple-200 mt-1">From others (view only)</p>
+            </div>
+          </div>
+
+          <div className="mt-4">
             <p className="text-sm text-purple-100">Logged in as: {session.user.email}</p>
-            <p className="text-xs text-purple-200 mt-1">+100 points awarded weekly</p>
+            <p className="text-xs text-purple-200 mt-1">+100 giveable points awarded weekly</p>
           </div>
         </div>
 
         <div className="flex gap-2 mb-6 bg-white rounded-xl p-2 shadow">
           <button
             onClick={() => setActiveTab('home')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${
-              activeTab === 'home'
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${activeTab === 'home'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                 : 'text-gray-600 hover:bg-gray-100'
-            }`}
+              }`}
           >
             <Trophy className="w-5 h-5" />
             Dashboard
           </button>
           <button
             onClick={() => setActiveTab('share')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${
-              activeTab === 'share'
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${activeTab === 'share'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                 : 'text-gray-600 hover:bg-gray-100'
-            }`}
+              }`}
           >
             <Share2 className="w-5 h-5" />
             Share Pride
           </button>
           <button
             onClick={() => setActiveTab('shop')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${
-              activeTab === 'shop'
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition ${activeTab === 'shop'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                 : 'text-gray-600 hover:bg-gray-100'
-            }`}
+              }`}
           >
             <ShoppingCart className="w-5 h-5" />
             Shop
@@ -403,16 +418,19 @@ function Dashboard({ session, onSignOut }) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Amount to Share (max: {prideScore})
+                  Amount to Share (max: {prideScore.giveable})
                 </label>
                 <input
                   type="number"
                   value={shareAmount}
                   onChange={(e) => setShareAmount(parseInt(e.target.value) || 0)}
                   min="1"
-                  max={prideScore}
+                  max={prideScore.giveable}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  You have {prideScore.giveable} giveable pride points
+                </p>
               </div>
               <button
                 onClick={generateShareLink}
@@ -494,7 +512,7 @@ export default function PrideMeApp() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const shareParam = params.get('share')
-    
+
     if (shareParam) {
       try {
         const decoded = JSON.parse(atob(shareParam))
@@ -507,7 +525,7 @@ export default function PrideMeApp() {
 
   const handleLogin = (sessionData) => {
     setSession(sessionData)
-    
+
     if (shareData && sessionData.user.email === shareData.to) {
       processShareLink(sessionData, shareData)
     }
@@ -515,7 +533,7 @@ export default function PrideMeApp() {
 
   const processShareLink = async (sessionData, data) => {
     setProcessing(true)
-    
+
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/process_pride_share`, {
         method: 'POST',
@@ -545,7 +563,7 @@ export default function PrideMeApp() {
     } catch (err) {
       alert('Error processing share link')
     }
-    
+
     setProcessing(false)
   }
 
